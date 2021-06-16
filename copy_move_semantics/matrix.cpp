@@ -2,15 +2,15 @@
 #include <algorithm>
 
 class Matrix {
-    unsigned N = 0;
-    unsigned M = 0;
+    unsigned r_num = 0;
+    unsigned c_num = 0;
     double *data = nullptr;
 public:
     Matrix() = default;
 
-    Matrix(unsigned n, unsigned m) : N(n), M(m), data(new double[N*M]){
-        std::fill_n(data,N * M, 0.0);
-        std::cout << "constructor of matrix " << N << "x" << M << std::endl;
+    Matrix(unsigned n, unsigned m) : r_num(n), c_num(m), data(new double[r_num * c_num]){
+        std::fill_n(data, r_num * c_num, 0.0);
+        std::cout << "constructor of matrix " << r_num << "x" << c_num << std::endl;
     }
 
     Matrix(const std::initializer_list<std::initializer_list<int>> &list) {
@@ -19,36 +19,36 @@ public:
             max_row = std::max(max_row, row.size());
         }
 
-        M = max_row;
-        N = list.size();
-        data = new double[N * M];
+        c_num = max_row;
+        r_num = list.size();
+        data = new double[r_num * c_num];
 
         unsigned int it = 0;
         for (const auto &row: list) {
             std::copy(row.begin(), row.end(), data+it);
-            it += M;
+            it += c_num;
         }
 
 
-        std::cout << " constructor of " << N << "x" << M << " matrix from initializer_list \n ";
+        std::cout << " constructor of " << r_num << "x" << c_num << " matrix from initializer_list \n ";
 
     }
 
     //move constr
-    Matrix(Matrix && matrix):N(matrix.N), M(matrix.M), data(matrix.data){
+    Matrix(Matrix && matrix): r_num(matrix.r_num), c_num(matrix.c_num), data(matrix.data){
         data = nullptr;
-        N = 0;
-        M = 0;
+        r_num = 0;
+        c_num = 0;
         std::cout << " move constructor" << std::endl;
     }
 
     //copy constr
     Matrix(Matrix & matrix){
         if(this!=&matrix){
-            N = matrix.N;
-            M = matrix.M;
-            data = new double[N*M];
-            std::copy(matrix.data, matrix.data+N*M, data);
+            r_num = matrix.r_num;
+            c_num = matrix.c_num;
+            data = new double[r_num * c_num];
+            std::copy(matrix.data, matrix.data + r_num * c_num, data);
         }
 
         std::cout << "copy constructor" << std::endl;
@@ -56,8 +56,8 @@ public:
 
     Matrix & operator=(Matrix&& matrix){
         std::swap(matrix.data, data);
-        std::swap(matrix.N, N);
-        std::swap(matrix.M, M);
+        std::swap(matrix.r_num, r_num);
+        std::swap(matrix.c_num, c_num);
 
         std::cout << "move assignment operator" << std::endl;
 
@@ -67,10 +67,10 @@ public:
     Matrix & operator=(Matrix & matrix){
         if(this!=&matrix){
             delete [] data;
-            N = matrix.N;
-            M = matrix.M;
-            data = new double[N*M];
-            std::copy(matrix.data, matrix.data+N*M, data);
+            r_num = matrix.r_num;
+            c_num = matrix.c_num;
+            data = new double[r_num * c_num];
+            std::copy(matrix.data, matrix.data + r_num * c_num, data);
 
         }
 
@@ -80,20 +80,20 @@ public:
     }
 
     friend Matrix operator-(const Matrix& matrix){
-        Matrix dif(matrix.N, matrix.M);
-        std::transform(matrix.data, matrix.data+matrix.N*matrix.M, dif.data, [](auto &m) -> auto{return -m; });
+        Matrix dif(matrix.r_num, matrix.c_num);
+        std::transform(matrix.data, matrix.data+ matrix.r_num * matrix.c_num, dif.data, [](auto &m) -> auto{return -m; });
 
         return dif;
     }
 
     double & operator()(const unsigned i, const unsigned j) const{
-        return data[(i-1)*M+(j-1)];
+        return data[(i-1) * c_num + (j - 1)];
     }
 
     friend std::ostream& operator<<(std::ostream & stream, Matrix & matrix){
-        for(unsigned i=1; i <= matrix.N; ++i){
-            for(unsigned j = 1; j<=matrix.M; ++j){
-                stream << matrix.data[(i-1)*matrix.M+(j-1)] << " ";
+        for(unsigned i=1; i <= matrix.r_num; ++i){
+            for(unsigned j = 1; j<= matrix.c_num; ++j){
+                stream << matrix.data[(i-1)*matrix.c_num + (j - 1)] << " ";
             }
             stream << std::endl;
         }
@@ -103,6 +103,30 @@ public:
     ~Matrix(){
         delete[] data;
     }
+
+};
+
+class MatrixWithLabel: public Matrix{
+    std::string label;
+public:
+    using Matrix::Matrix;
+
+    MatrixWithLabel(const std::string &lab, unsigned r_num, unsigned c_num):Matrix(r_num, c_num){
+        label = lab;
+    }
+
+    MatrixWithLabel(const std::string &lab, const std::initializer_list<std::initializer_list<int>> & list):Matrix(list){
+        label = lab;
+    }
+
+    void set_label(const std::string lab){
+        label = lab;
+    }
+
+    std::string get_label(){
+        return label;
+    }
+
 
 };
 
@@ -128,15 +152,15 @@ int main(){
     Matrix m6 = -m4;
     Matrix * pm = new Matrix(-m4);
     std::cout << m6(2,1) << std::endl; // 32
-//
-//    std::cout << "Inheritance \n";
-//    MatrixWithLabel l0("B", 3, 4);
-//    MatrixWithLabel l1({{1,2},{4,5}});
-//    l1.setLabel("A");
-//    MatrixWithLabel l2 = l1;
-//    MatrixWithLabel l3 = std::move(l1);
-//    std::cout << l2.getLabel() << " " << l3.getLabel() << std::endl;
-//    // 	cout << l1.getLabel() << endl;
+
+    std::cout << "Inheritance \n";
+    MatrixWithLabel l0("B", 3, 4);
+    MatrixWithLabel l1({{1,2},{4,5}});
+    l1.set_label("A");
+    MatrixWithLabel l2 = l1;
+    MatrixWithLabel l3 = std::move(l1);
+    std::cout << l2.get_label() << " " << l3.get_label() << std::endl;
+//     	cout << l1.getLabel() << endl;
 //
     return 0;
 }
